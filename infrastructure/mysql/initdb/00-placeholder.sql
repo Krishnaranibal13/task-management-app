@@ -1,0 +1,12 @@
+-- Task Management MVP — MySQL bootstrap notes (Phase 1)
+--
+-- The docker-compose stack provisions database `taskdb` and user
+-- `appuser` via official image environment variables on first startup.
+--
+-- Schema objects are NOT created here: all schema changes must go
+-- through Alembic migrations (backend/alembic.ini, backend/migrations).
+-- The first migration revision will be authored in Phase 2 when domain
+-- models exist.
+--
+-- This file is intentionally a placeholder so the initdb mount exists.
+SELECT 'Task Management MVP: schema managed by Alembic' AS note;

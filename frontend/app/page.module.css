@@ -1,0 +1,75 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 2rem;
+  background: #0b1020;
+  color: #e6e9f2;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  max-width: 40rem;
+  text-align: center;
+}
+
+.subtitle {
+  margin: 0;
+  color: #9aa4bf;
+}
+
+.stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0.5rem 0 0;
+}
+
+.stackRow {
+  border: 1px solid #232c47;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  background: #111730;
+}
+
+.stackRow dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8b93ab;
+}
+
+.stackRow dd {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+}
+
+.apiLink {
+  color: #7aa2ff;
+  text-decoration: none;
+  border: 1px solid #2a3a5f;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.apiLink:hover {
+  background: #16203c;
+}
+
+.footer {
+  position: absolute;
+  bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #8b93ab;
+  font-size: 0.85rem;
+}

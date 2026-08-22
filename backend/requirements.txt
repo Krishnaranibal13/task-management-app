@@ -1,0 +1,18 @@
+# Task Management MVP — backend Python dependencies (Phase 1 foundation)
+# Pinned for reproducible local development and CI.
+
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+
+SQLAlchemy==2.0.40
+PyMySQL==1.1.1
+cryptography==44.0.2        # required by PyMySQL for MySQL 8 caching_sha2_password auth
+alembic==1.15.2
+
+pydantic==2.11.3
+pydantic-settings==2.8.1
+
+# Reserved for later phases (installed from Phase 2/3 onward):
+# argon2-cffi          # Argon2id password hashing (auth phase)
+# python-multipart     # form parsing if needed
+# pytest / httpx       # test tooling

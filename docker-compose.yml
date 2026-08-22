@@ -1,0 +1,67 @@
+# Task Management MVP — local development stack
+#
+# Same-origin topology note: in production the approved architecture
+# prefers serving frontend and API from one origin behind a reverse proxy.
+# This compose file is for LOCAL development only (separate ports).
+#
+# Secrets: values below are local-only placeholders. Copy .env.example
+# files and adjust; never commit real secrets.
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: taskmgmt-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root-change-me-local-only   # local only
+      MYSQL_DATABASE: taskdb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: change-me-local-only             # local only
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Optional init scripts run once on first startup:
+      - ./infrastructure/mysql/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot-change-me-local-only"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    container_name: taskmgmt-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      ENVIRONMENT: development
+      MYSQL_HOST: db            # inside the compose network
+      MYSQL_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build: ./frontend
+    container_name: taskmgmt-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      # Hot reload for local development.
+      - ./frontend/app:/app/app
+      - ./frontend/public:/app/public
+
+volumes:
+  db_data:

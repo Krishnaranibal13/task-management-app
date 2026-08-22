@@ -1,0 +1,26 @@
+# --- Task Management MVP ---
+# Local development secrets and environment files
+.env
+.env.*
+!.env.example
+
+# Python (backend)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Node (frontend)
+node_modules/
+.next/
+out/
+next-env.d.ts
+
+# Docker
+docker-compose.override.yml
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
