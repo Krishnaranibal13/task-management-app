@@ -6,6 +6,7 @@ from alembic import context
 
 # Import the ORM base so metadata is populated for autogenerate.
 from app.db.base import Base
+from app.db.base_class import User, Task, Comment  # noqa: F401
 from app.db.session import build_database_url
 
 config = context.config
@@ -20,7 +21,17 @@ target_metadata = Base.metadata
 
 
 def _database_url() -> str:
-    """Resolve the database URL from settings (never logged)."""
+    """Resolve the database URL (never logged).
+
+    An explicitly configured ``sqlalchemy.url`` (e.g. set by tests/CI to
+    point at a disposable database) takes precedence. Otherwise the URL
+    comes from application environment settings. This precedence is a
+    SAFETY feature: destructive migration tests must be able to target
+    their disposable database deterministically.
+    """
+    override = config.get_main_option("sqlalchemy.url")
+    if override:
+        return override
     return build_database_url()
 
 

@@ -27,12 +27,12 @@ task-management-app/
 │   └── .env.example              # safe env template
 ├── backend/                      # FastAPI service
 │   ├── app/
-│   │   ├── main.py               # application factory (/api/health, /api/meta)
+│   │   ├── main.py               # application factory (/api/health)
 │   │   ├── core/config.py        # env-driven settings (pydantic-settings)
 │   │   ├── db/                   # engine/session/base scaffolding (MySQL)
-│   │   ├── api/routes/           # health + meta routers only
-│   │   ├── models/               # empty until Phase 2 (domain models)
-│   │   └── schemas/              # empty until Phase 2 (request schemas)
+│   │   ├── api/routes/           # health router only
+│   │   ├── models/               # User, Task, Comment + approved enums
+│   │   └── schemas/              # strict request-schema foundations
 │   ├── migrations/               # Alembic environment + versions/
 │   ├── alembic.ini
 │   ├── requirements.txt          # pinned dependencies
@@ -99,7 +99,16 @@ source .venv/Scripts/activate
 pytest
 ```
 
-Phase 1 tests cover `/api/health`, `/api/meta`, and unknown-route 404s.
+Phase 1 tests cover `/api/health`. Phase 2 adds domain tests (model
+structure, approved enum value sets, strict schemas) plus REAL MySQL
+integration tests (relationships, constraints, CHECK enforcement,
+Alembic upgrade/downgrade integrity). DB-backed tests auto-skip when
+the Docker MySQL is not running:
+
+```bash
+docker compose up -d db     # then re-run pytest
+```
+
 Playwright end-to-end tests are introduced with the UI phases.
 
 ## Docker-based local stack
