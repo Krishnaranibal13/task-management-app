@@ -27,10 +27,11 @@ class Settings(BaseSettings):
     # --- HTTP server ---------------------------------------------------
     BACKEND_PORT: int = 8000
 
-    # Reserved for later phases (Phase 3+): session/CSRF configuration.
-    # Real secrets must come exclusively from the environment.
-    SESSION_COOKIE_NAME: str = "session"
-    RATE_LIMIT_LOGIN_MAX_ATTEMPTS: int = 10  # configurable threshold
+    # NOTE: Session/CSRF and login rate-limit configuration is
+    # deliberately NOT defined here. Those values — including the
+    # session cookie name — have not been human-approved and belong to
+    # the authentication/session phase. Real secrets must come
+    # exclusively from the environment.
 
     model_config = {
         "env_file": ".env",

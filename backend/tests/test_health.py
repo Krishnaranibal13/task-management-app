@@ -1,4 +1,4 @@
-"""Phase 1 smoke tests: health + meta endpoints."""
+"""Phase 1 smoke tests: health endpoint only."""
 
 from fastapi.testclient import TestClient
 
@@ -10,15 +10,10 @@ def test_health_ok(client: TestClient) -> None:
     assert resp.json() == {"status": "ok"}
 
 
-def test_meta_reports_foundation_phase(client: TestClient) -> None:
-    """/api/meta reports service metadata without secrets."""
+def test_meta_endpoint_removed(client: TestClient) -> None:
+    """/api/meta must NOT exist: not part of the approved MVP surface."""
     resp = client.get("/api/meta")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["phase"] == "foundation"
-    assert body["environment"] in {"local", "development", "production"}
-    # No secrets may ever appear in metadata responses.
-    assert not any("password" in key.lower() for key in body)
+    assert resp.status_code == 404
 
 
 def test_unknown_route_returns_404(client: TestClient) -> None:

@@ -1,8 +1,8 @@
 """Task Management MVP — FastAPI backend.
 
-Foundation phase: application factory, health endpoint, and MySQL/Alembic
-scaffolding only. Authentication, RBAC, and task/comment features are
-deliberately NOT implemented in Phase 1.
+Foundation phase: application factory and health endpoint, plus
+MySQL/Alembic scaffolding. Authentication, RBAC, and task/comment
+features are deliberately NOT implemented in Phase 1.
 """
 
 from collections.abc import AsyncIterator
@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.routes import health, meta
+from app.api.routes import health
 from app.core.config import settings
 
 
@@ -36,15 +36,13 @@ def create_app() -> FastAPI:
         title=settings.PROJECT_NAME,
         version="0.1.0",
         description=(
-            "Backend foundation (Phase 1): health/meta endpoints and "
-            "database scaffolding. Auth, tasks, and comments arrive in "
-            "later phases."
+            "Backend foundation (Phase 1): health endpoint and database "
+            "scaffolding. Auth, tasks, and comments arrive in later phases."
         ),
         lifespan=lifespan,
     )
 
     app.include_router(health.router)
-    app.include_router(meta.router)
 
     return app
 

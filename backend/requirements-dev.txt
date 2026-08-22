@@ -1,0 +1,11 @@
+# Backend development/test-only dependencies (Task Management MVP)
+# Install on top of requirements.txt:
+#
+#   pip install -r requirements.txt -r requirements-dev.txt
+#
+# Test-only tooling is kept out of the runtime dependency set.
+
+-r requirements.txt
+
+pytest==9.1.1
+httpx==0.28.1               # FastAPI TestClient transport

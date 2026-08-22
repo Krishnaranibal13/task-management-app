@@ -57,14 +57,13 @@ task-management-app/
 cd backend
 python -m venv .venv
 source .venv/Scripts/activate      # Windows Git Bash (.venv/bin/activate on Linux/macOS)
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 
 cp .env.example .env               # adjust values; never commit .env
 uvicorn app.main:app --reload --port 8000
 ```
 
 - Health check: http://localhost:8000/api/health
-- Metadata: http://localhost:8000/api/meta
 - OpenAPI docs: http://localhost:8000/docs
 
 ### Database migrations (Alembic)
@@ -106,13 +105,15 @@ Playwright end-to-end tests are introduced with the UI phases.
 ## Docker-based local stack
 
 ```bash
-cp backend/.env.example backend/.env   # required: compose reads backend/.env
-docker compose up --build
+cp .env.example .env                   # repo root; feeds docker compose (no secrets committed)
+docker compose up --build -d
 ```
 
 - Frontend: http://localhost:3000
 - Backend:  http://localhost:8000/api/health
-- MySQL:    localhost:3306 (database `taskdb`, user `appuser`)
+- MySQL:    localhost:${MYSQL_HOST_PORT:-33061} (database `taskdb`, user `appuser`;
+            the non-default host port avoids colliding with a native MySQL
+            service on this machine — in-network access stays `db:3306`)
 
 All schema changes go through Alembic (`alembic upgrade head` runs
 automatically before backend startup in compose).

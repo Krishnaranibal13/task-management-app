@@ -1,4 +1,9 @@
-"""Health check routes."""
+"""Health check route.
+
+The approved MVP exposes a single public liveness endpoint.
+A public metadata endpoint was reviewed and removed (not required by
+the approved architecture).
+"""
 
 from fastapi import APIRouter
 

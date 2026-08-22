@@ -1,4 +1,4 @@
-# Task Management MVP — backend Python dependencies (Phase 1 foundation)
+# Backend runtime dependencies (Task Management MVP)
 # Pinned for reproducible local development and CI.
 
 fastapi==0.115.12
@@ -15,4 +15,3 @@ pydantic-settings==2.8.1
 # Reserved for later phases (installed from Phase 2/3 onward):
 # argon2-cffi          # Argon2id password hashing (auth phase)
 # python-multipart     # form parsing if needed
-# pytest / httpx       # test tooling
