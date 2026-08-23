@@ -12,6 +12,7 @@ alembic==1.15.2
 pydantic==2.11.3
 pydantic-settings==2.8.1
 
-# Reserved for later phases (installed from Phase 2/3 onward):
-# argon2-cffi          # Argon2id password hashing (auth phase)
+argon2-cffi==23.1.0         # Argon2id password hashing (approved algorithm)
+
+# Reserved for later phases:
 # python-multipart     # form parsing if needed

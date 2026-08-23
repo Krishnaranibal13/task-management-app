@@ -49,6 +49,9 @@ services:
       MYSQL_DB: ${MYSQL_DB:-taskdb}
       MYSQL_USER: ${MYSQL_USER:-appuser}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+      # LOCAL/TEST-ONLY value so the dev container can create sessions.
+      # Production lifetimes are deployment decisions, never code defaults.
+      SESSION_LIFETIME_SECONDS: "3600"
     depends_on:
       db:
         condition: service_healthy

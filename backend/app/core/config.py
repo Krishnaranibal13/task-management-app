@@ -1,8 +1,9 @@
 """Central application settings.
 
 All values come from environment variables (12-factor). No secrets are
-hardcoded. In Phase 1 these are scaffolding for later phases; nothing here
-authenticates or stores credentials yet.
+hardcoded. Security-relevant lifetimes/thresholds are configuration, not
+code policy: production values must be supplied by deployment
+configuration and are NOT invented here.
 """
 
 from functools import lru_cache
@@ -27,11 +28,30 @@ class Settings(BaseSettings):
     # --- HTTP server ---------------------------------------------------
     BACKEND_PORT: int = 8000
 
-    # NOTE: Session/CSRF and login rate-limit configuration is
-    # deliberately NOT defined here. Those values — including the
-    # session cookie name — have not been human-approved and belong to
-    # the authentication/session phase. Real secrets must come
-    # exclusively from the environment.
+    # --- Sessions / cookies (Phase 3A) ----------------------------------
+    # Cookie NAME is configuration, not product behavior. The value below
+    # is the local/test default; production naming is a deployment
+    # decision and stays overridable via environment.
+    SESSION_COOKIE_NAME: str = "session"
+
+    # Session lifetime in seconds. REQUIRED for session creation: there
+    # is deliberately NO fallback value — an unset/invalid lifetime is a
+    # configuration error and session creation fails closed. Production
+    # policy values are deployment decisions, not code defaults.
+    SESSION_LIFETIME_SECONDS: int | None = None
+
+    # --- Login rate limiting (Phase 3A) ---------------------------------
+    # Threshold/window are CONFIGURATION DECISIONS. No permanent
+    # production values are established here; deployment must set them.
+    # Tests inject explicit test-only values.
+    LOGIN_RATE_LIMIT_MAX_ATTEMPTS: int | None = None
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int | None = None
+
+    # --- CORS (Phase 3A) -------------------------------------------------
+    # Production posture: same-origin preferred. Explicit trusted origins
+    # only; credentialed wildcard is prohibited by design (the CORSMiddleware
+    # wiring rejects '*' whenever credentials are allowed).
+    CORS_ALLOWED_ORIGINS_RAW: str = ""
 
     model_config = {
         "env_file": ".env",
@@ -39,6 +59,20 @@ class Settings(BaseSettings):
         "extra": "ignore",
         "case_sensitive": True,
     }
+
+    @property
+    def cors_allowed_origins(self) -> list[str]:
+        """Parsed explicit origin allowlist ('' → empty)."""
+        return [
+            o.strip()
+            for o in self.CORS_ALLOWED_ORIGINS_RAW.split(",")
+            if o.strip()
+        ]
+
+    @property
+    def cookie_secure(self) -> bool:
+        """Secure attribute: required in production, off locally."""
+        return self.ENVIRONMENT == "production"
 
 
 @lru_cache
