@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import health
+from app.api.routes import tasks as tasks_routes
 from app.auth.authorization import AuthorizationDenied
 from app.auth.routes import router as auth_router
 from app.core.config import settings
@@ -112,6 +113,8 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(auth_router)
+    # Phase 4A: Task API (approved six endpoints only).
+    app.include_router(tasks_routes.router)
 
     return app
 
