@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import health
+from app.auth.authorization import AuthorizationDenied
 from app.auth.routes import router as auth_router
 from app.core.config import settings
 
@@ -95,6 +96,19 @@ def create_app() -> FastAPI:
                 ]
             },
         )
+
+    # --- Authorization → HTTP 403 boundary (Phase 3B) --------------------
+    # Centralized mapping: policies raise AuthorizationDenied; the API
+    # layer alone translates that into HTTP 403 with a GENERIC, sanitized
+    # body. Internal reason strings, user/role/task identifiers and
+    # assignment details are never exposed. This handler does NOT touch
+    # authentication failures — Phase 3A dependencies keep returning 401
+    # for missing/unknown/expired/revoked sessions.
+    @app.exception_handler(AuthorizationDenied)
+    async def _authorization_denied_handler(
+        request: Request, exc: AuthorizationDenied
+    ):
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
     app.include_router(health.router)
     app.include_router(auth_router)
