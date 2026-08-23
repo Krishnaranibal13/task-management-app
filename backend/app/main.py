@@ -16,6 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.routes import comments as comments_routes
 from app.api.routes import health
 from app.api.routes import tasks as tasks_routes
 from app.auth.authorization import AuthorizationDenied
@@ -115,6 +116,8 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     # Phase 4A: Task API (approved six endpoints only).
     app.include_router(tasks_routes.router)
+    # Phase 4B: Comment API (approved two endpoints only).
+    app.include_router(comments_routes.router)
 
     return app
 
