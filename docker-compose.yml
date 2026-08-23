@@ -52,6 +52,10 @@ services:
       # LOCAL/TEST-ONLY value so the dev container can create sessions.
       # Production lifetimes are deployment decisions, never code defaults.
       SESSION_LIFETIME_SECONDS: "3600"
+      # Explicit trusted-origin allowlist (Phase 5A: browser SPA on :3000
+      # calls this API cross-origin in local development). Credentialed
+      # wildcard remains prohibited by app startup validation.
+      CORS_ALLOWED_ORIGINS_RAW: "${CORS_ALLOWED_ORIGINS_RAW:-http://localhost:3000,http://127.0.0.1:3000}"
     depends_on:
       db:
         condition: service_healthy

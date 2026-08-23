@@ -1,44 +1,32 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-const STACK = [
-  { label: "Frontend", value: "Next.js + TypeScript" },
-  { label: "Backend", value: "FastAPI (Python)" },
-  { label: "Database", value: "MySQL" },
-  { label: "Testing", value: "pytest + Playwright" },
-];
+/**
+ * Root page: renders login UI or the authenticated shell based on the
+ * centralized auth state. A "loading" splash avoids redirect loops and
+ * prevents flashing the login form during session bootstrap.
+ */
+
+import LoginForm from "./login-form";
+import AppShell from "./app-shell";
+import { useAuth } from "@/lib/auth-context";
 
 export default function Home() {
+  const { status, user } = useAuth();
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <h1>Task Management MVP</h1>
-        <p className={styles.subtitle}>
-          Foundation phase — frontend scaffold only. No application features
-          are implemented yet.
-        </p>
-        <dl className={styles.stack}>
-          {STACK.map((item) => (
-            <div key={item.label} className={styles.stackRow}>
-              <dt>{item.label}</dt>
-              <dd>{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <a className={styles.apiLink} href="/api/health">
-          Backend health check → /api/health
-        </a>
+    <div className="page">
+      <main className="main">
+        {status === "loading" && (
+          <section className="card" aria-live="polite" aria-busy="true">
+            <h1>Task Management MVP</h1>
+            <p className="subtitle">Checking your session…</p>
+          </section>
+        )}
+
+        {status === "unauthenticated" && <LoginForm />}
+
+        {status === "authenticated" && user !== null && <AppShell />}
       </main>
-      <footer className={styles.footer}>
-        <Image
-          src="/next.svg"
-          alt=""
-          width={80}
-          height={20}
-          priority
-        />
-        <span>Phase 1 — foundation</span>
-      </footer>
     </div>
   );
 }

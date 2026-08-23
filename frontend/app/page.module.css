@@ -1,3 +1,6 @@
+/* Phase 5A: login + application shell styles.
+   Responsive for desktop/tablet; no mobile-native assumptions. */
+
 .page {
   display: flex;
   flex-direction: column;
@@ -5,71 +8,134 @@
   justify-content: center;
   min-height: 100svh;
   padding: 2rem;
-  background: #0b1020;
-  color: #e6e9f2;
+  background: #f6f7fb;
+  color: #1c2333;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 .main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.25rem;
-  max-width: 40rem;
-  text-align: center;
+  width: 100%;
+  max-width: 30rem; /* narrow column scales cleanly on tablets */
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #dfe3ee;
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgb(28 35 51 / 8%);
+}
+
+.card h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.45rem;
 }
 
 .subtitle {
-  margin: 0;
-  color: #9aa4bf;
+  margin: 0 0 1.5rem;
+  color: #5b6478;
 }
 
-.stack {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 0.75rem;
+.field {
+  margin-bottom: 1rem;
+}
+
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.field input {
   width: 100%;
-  margin: 0.5rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #c4cbdd;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.field input:focus-visible,
+button:focus-visible {
+  outline: 3px solid #3557ff;
+  outline-offset: 2px;
+}
+
+.form-error {
+  color: #a12622;
+  background: #fdecec;
+  border: 1px solid #f2b8b5;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  margin: 0 0 1rem;
+}
+
+button.primary {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: #3557ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button.primary:hover:not(:disabled) {
+  background: #2743c9;
+}
+
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Shell */
+.shell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.shell-header button.primary {
+  width: auto;
+}
+
+.whoami {
+  margin: 0 0 1.25rem;
 }
 
 .stackRow {
-  border: 1px solid #232c47;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  text-align: left;
-  background: #111730;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eef0f7;
 }
 
 .stackRow dt {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #8b93ab;
-}
-
-.stackRow dd {
-  margin: 0.25rem 0 0;
+  color: #5b6478;
   font-weight: 600;
 }
 
-.apiLink {
-  color: #7aa2ff;
-  text-decoration: none;
-  border: 1px solid #2a3a5f;
-  border-radius: 999px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+.stackRow dd {
+  margin: 0;
 }
 
-.apiLink:hover {
-  background: #16203c;
+.placeholder {
+  border: 1px dashed #c4cbdd;
+  border-radius: 10px;
+  padding: 1.25rem;
+  text-align: center;
 }
 
-.footer {
-  position: absolute;
-  bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #8b93ab;
-  font-size: 0.85rem;
+.placeholder p {
+  margin: 0.15rem 0;
+}
+
+.muted {
+  color: #5b6478;
 }
