@@ -8,7 +8,7 @@ Server-controlled values (user id, role, identity, timestamps, session
 digests, revocation state) appear in NO request schema.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.base import StrictModel
 
@@ -37,3 +37,20 @@ class MeResponse(BaseModel):
     user_id: int
     email: str
     role: str
+
+
+class CsrfBootstrapResponse(BaseModel):
+    """Phase 4C: EXACTLY the minimum infrastructure shape.
+
+    Contains ONLY the raw new CSRF token for the authenticated session.
+    Never included: session id/token, digests, cookie value, identity,
+    role, database row id, or expiration internals.
+
+    ``extra="forbid"`` makes the schema FAIL CLOSED: any undeclared
+    field is a validation error rather than being silently ignored —
+    this schema can never grow fields by accident.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    csrf_token: str

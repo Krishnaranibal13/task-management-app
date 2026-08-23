@@ -102,3 +102,28 @@ def revoke_session(db: Session, session_row: AuthSession) -> None:
     """Server-side logout invalidation (authoritative)."""
     session_row.revoked_at = utcnow_naive()
     db.commit()
+
+
+def rotate_csrf_token(db: Session, session_row: AuthSession) -> str:
+    """Issue a fresh CSRF token for an EXISTING active session.
+
+    Phase 4C bootstrap capability: after a browser/SPA refresh the
+    HttpOnly session cookie survives but in-memory CSRF state is lost,
+    so an authenticated client needs a new synchronizer token for its
+    CURRENT session.
+
+    Behavior:
+      - generates a fresh cryptographically secure token (same
+        generator as login-time issuance),
+      - replaces ONLY this session's stored CSRF digest,
+      - leaves session id (token digest), user identity, creation time,
+        and expiration policy untouched — no lifetime extension,
+      - implicitly invalidates the previously issued token for THIS
+        session (the old raw value no longer matches the stored digest),
+      - never persists or logs the raw token; only its digest remains,
+      - does not modify any OTHER session row.
+    """
+    fresh = generate_csrf_token()
+    session_row.csrf_token_digest = digest(fresh)
+    db.commit()
+    return fresh

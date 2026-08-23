@@ -18,7 +18,13 @@ from sqlalchemy.orm import Session as OrmSession
 
 from app.auth import rate_limit, session_service
 from app.auth.dependencies import get_current_session, get_current_user, require_csrf
-from app.auth.schemas import LoginRequest, LoginResponse, LogoutResponse, MeResponse
+from app.auth.schemas import (
+    CsrfBootstrapResponse,
+    LoginRequest,
+    LoginResponse,
+    LogoutResponse,
+    MeResponse,
+)
 from app.auth.security import hash_password, verify_dummy_for_unknown_email, verify_password  # noqa: F401
 from app.auth.session_model import AuthSession
 from app.core.config import settings
@@ -107,6 +113,39 @@ def logout(
 def me(user: User = Depends(get_current_user)) -> MeResponse:
     """Authenticated identity probe (no sensitive values)."""
     return MeResponse(user_id=user.id, email=user.email, role=user.role.value)
+
+
+@router.get("/csrf", response_model=CsrfBootstrapResponse)
+def csrf_bootstrap(
+    response: Response,
+    db: OrmSession = Depends(get_db),
+    current: AuthSession = Depends(get_current_session),
+) -> CsrfBootstrapResponse:
+    """Phase 4C: CSRF bootstrap for an EXISTING active session.
+
+    After a browser/SPA refresh the HttpOnly session cookie survives but
+    in-memory CSRF state is lost. This authenticated SAFE endpoint
+    rotates the session-bound synchronizer token (same crypto generator
+    as login-time issuance) and returns the RAW new token exactly once.
+
+    Contract:
+      - requires a valid existing Phase 3A session (401 otherwise);
+        missing/unknown/expired/revoked are indistinguishable,
+      - does NOT require CSRF itself and never creates a new login
+        session, extends lifetime, or changes identity,
+      - the previously issued token for THIS session becomes invalid;
+        other sessions are untouched,
+      - only the digest persists server-side; the raw value is never
+        logged,
+      - sensitive credential material is marked non-cacheable on the
+        injected ``Response`` (headers survive FastAPI's response-model
+        serialization pipeline, which stays fail-closed).
+    """
+    fresh = session_service.rotate_csrf_token(db, current)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"  # legacy defense-in-depth
+    _log_auth_event("csrf_bootstrap")
+    return CsrfBootstrapResponse(csrf_token=fresh)
 
 
 def _log_auth_event(event: str, **context) -> None:
