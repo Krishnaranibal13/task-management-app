@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse
 from app.api.routes import comments as comments_routes
 from app.api.routes import health
 from app.api.routes import tasks as tasks_routes
+from app.api.routes import users as users_routes
 from app.auth.authorization import AuthorizationDenied
 from app.auth.routes import router as auth_router
 from app.core.config import settings
@@ -118,6 +119,9 @@ def create_app() -> FastAPI:
     app.include_router(tasks_routes.router)
     # Phase 4B: Comment API (approved two endpoints only).
     app.include_router(comments_routes.router)
+    # Phase 5B prerequisite: minimal authenticated user directory
+    # (GET /api/users — read-only, both approved roles).
+    app.include_router(users_routes.router)
 
     return app
 
