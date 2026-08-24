@@ -116,3 +116,41 @@ export function updateTaskStatus(
 export function deleteTask(taskId: number, options: ApiClientOptions = {}): Promise<void> {
   return apiFetch<void>(`/api/tasks/${taskId}`, { method: "DELETE", ...options });
 }
+
+// ---------------------------------------------------------------------------
+// Comments (Phase 5C) — exactly the two approved endpoints.
+// ---------------------------------------------------------------------------
+
+/** Approved Comment response fields, exactly as the backend returns them. */
+export interface Comment {
+  id: number;
+  task_id: number;
+  user_id: number;
+  content: string;
+  created_at: string;
+}
+
+/** GET /api/tasks/{task_id}/comments — safe read; no CSRF needed. */
+export function listComments(
+  taskId: number,
+  options: ApiClientOptions = {},
+): Promise<Comment[]> {
+  return apiFetch<Comment[]>(`/api/tasks/${taskId}/comments`, options);
+}
+
+/**
+ * POST /api/tasks/{task_id}/comments — body EXACTLY {content}.
+ * Author identity comes from the backend session; task identity from the
+ * route. The CSRF header is attached by apiFetch for this mutation.
+ */
+export function createComment(
+  taskId: number,
+  input: { content: string },
+  options: ApiClientOptions = {},
+): Promise<Comment> {
+  return apiFetch<Comment>(`/api/tasks/${taskId}/comments`, {
+    method: "POST",
+    body: { content: input.content },
+    ...options,
+  });
+}

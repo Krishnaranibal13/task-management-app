@@ -18,6 +18,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import CommentsPanel from "./comments-panel";
 import {
   createTask,
   deleteTask,
@@ -72,6 +73,7 @@ export default function TaskBoard() {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [commentsTask, setCommentsTask] = useState<Task | null>(null);
 
   const opts = useMemo(() => ({ getCsrfToken }), [getCsrfToken]);
 
@@ -239,6 +241,9 @@ export default function TaskBoard() {
   }, [tasks]);
 
   const isPm = role === "pm";
+  // Phase 5C: explicit approved-role gate. Unknown/unapproved roles get
+  // NO comment mutation control (view-only); backend remains authoritative.
+  const canComment = role === "pm" || role === "developer";
 
   // Loading gate: keep the skeleton until the first refetch settles.
   if (loading) {
@@ -409,6 +414,17 @@ export default function TaskBoard() {
         </div>
       )}
 
+      {/* Accessible comments dialog (approved roles gate the form) */}
+      {commentsTask !== null && (
+        <CommentsPanel
+          task={commentsTask}
+          users={users}
+          canComment={canComment}
+          getCsrfToken={getCsrfToken}
+          onClose={() => setCommentsTask(null)}
+        />
+      )}
+
       {/* Four-column Kanban — ALWAYS renders all four columns, even when
           empty (an optional empty-state hint sits above the grid). */}
       {tasks.length === 0 && (
@@ -499,6 +515,15 @@ export default function TaskBoard() {
                           </button>
                         </>
                       )}
+                      {/* Comments: BOTH approved roles, regardless of
+                          assignment (Phase 4B/5C contract). */}
+                      <button
+                        type="button"
+                        onClick={() => setCommentsTask(task)}
+                        aria-label={`Comments for ${task.title}`}
+                      >
+                        Comments
+                      </button>
                     </div>
                   </article>
                 );

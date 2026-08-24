@@ -290,3 +290,90 @@ textarea:focus-visible {
   outline: 3px solid #1d4ed8;
   outline-offset: 1px;
 }
+
+/* ---- Phase 5C: Comments ------------------------------------------------ */
+
+.comments-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 24, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.comments-panel {
+  background: #ffffff;
+  border-radius: 12px;
+  width: min(34rem, 92vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(15, 20, 40, 0.25);
+}
+
+.comments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comments-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.comments-close {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.comment-list {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.comment-item {
+  border: 1px solid #d8deee;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  background: #fafbfe;
+}
+
+.comment-meta {
+  margin: 0 0 0.2rem;
+  font-size: 0.8rem;
+  color: #5b6478;
+}
+
+.comment-content {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.comment-form {
+  display: grid;
+  gap: 0.35rem;
+  border-top: 1px solid #e3e8f4;
+  padding-top: 0.75rem;
+}
+
+.comment-form label {
+  font-size: 0.85rem;
+  color: #39415a;
+}
+
+.comment-form textarea {
+  padding: 0.45rem;
+  border: 1px solid #b9c3dd;
+  border-radius: 6px;
+  font: inherit;
+}
