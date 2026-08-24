@@ -7,6 +7,7 @@ outcome: HTTP 401 with a generic body.
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session as OrmSession
 
+from app.auth.origin_validation import validate_request_origin
 from app.auth.session_model import AuthSession
 from app.auth import session_service
 from app.core.config import settings
@@ -55,12 +56,21 @@ def require_csrf(
     db: OrmSession = Depends(get_db),
     current: AuthSession = Depends(get_current_session),
 ) -> AuthSession:
-    """Validate the session-bound synchronizer CSRF token.
+    """Validate Origin/Referer defense-in-depth, then the synchronizer token.
 
+    SEC-MED-01: centralized Origin/Referer validation for state-changing
+    requests (POST/PUT/PATCH/DELETE) runs FIRST and is ADDITIONAL — it
+    never replaces the session-bound synchronizer-token check below.
     Token arrives in the ``X-CSRF-Token`` header and must match the
     digest bound to THIS session. Missing/invalid/foreign-session tokens
-    all yield 403. The token is never logged.
+    all yield 403. Tokens are never logged.
+
+    Every approved mutating endpoint (logout, task create/update/status/
+    delete, comment create, developer /status) depends on this single
+    dependency, so the defense applies uniformly with no per-route logic.
     """
+    validate_request_origin(request)
+
     presented = request.headers.get("X-CSRF-Token", "")
     if not presented or not secrets_compare_digest(
         session_service.digest(presented), current.csrf_token_digest
