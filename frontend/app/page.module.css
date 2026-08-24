@@ -139,3 +139,154 @@ button.primary:disabled {
 .muted {
   color: #5b6478;
 }
+
+/* ---- Phase 5B: Kanban board ------------------------------------------- */
+
+.board-card {
+  width: 100%;
+  max-width: none;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(15rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+  overflow-x: auto; /* horizontal scroll on narrower tablets */
+  padding-bottom: 0.5rem;
+}
+
+.column {
+  background: #f3f5fb;
+  border: 1px solid #dde3f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+  min-height: 12rem;
+}
+
+.column h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.column .count {
+  display: inline-block;
+  min-width: 1.4rem;
+  text-align: center;
+  background: #e2e7f5;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.task-card {
+  background: #ffffff;
+  border: 1px solid #d8deee;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.task-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+}
+
+.task-meta {
+  margin: 0.15rem 0;
+  font-size: 0.88rem;
+}
+
+.pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+  border: 1px solid currentColor;
+  font-size: 0.8rem;
+}
+
+/* Priority is communicated by TEXT (never color alone). */
+.pill-low { color: #2f6f3f; }
+.pill-medium { color: #8a6d00; }
+.pill-high { color: #a12622; }
+
+.task-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.task-actions select {
+  max-width: 10rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.task-form {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid #c9d2ea;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #f8f9fe;
+}
+
+.task-form h2 {
+  margin: 0 0 0.4rem;
+}
+
+.task-form label {
+  font-size: 0.85rem;
+  color: #39415a;
+}
+
+.task-form input,
+.task-form select,
+.task-form textarea {
+  padding: 0.45rem;
+  border: 1px solid #b9c3dd;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.confirm-box {
+  border: 1px solid #a12622;
+  background: #fdf3f2;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.confirm-box p {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+}
+
+button.danger {
+  background: #a12622;
+  color: #fff;
+}
+
+button.primary:focus-visible,
+button.danger:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 1px;
+}

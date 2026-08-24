@@ -8,6 +8,7 @@
 
 import LoginForm from "./login-form";
 import AppShell from "./app-shell";
+import TaskBoard from "./task-board";
 import { useAuth } from "@/lib/auth-context";
 
 export default function Home() {
@@ -25,7 +26,12 @@ export default function Home() {
 
         {status === "unauthenticated" && <LoginForm />}
 
-        {status === "authenticated" && user !== null && <AppShell />}
+        {status === "authenticated" && user !== null && (
+          <>
+            <AppShell />
+            <TaskBoard />
+          </>
+        )}
       </main>
     </div>
   );

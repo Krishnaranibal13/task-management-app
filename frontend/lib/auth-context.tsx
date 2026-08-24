@@ -35,6 +35,8 @@ interface LoginResponse {
 interface AuthContextValue {
   status: AuthStatus;
   user: CurrentUser | null;
+  /** In-memory CSRF token accessor (never persisted, never rendered). */
+  getCsrfToken: () => string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -188,8 +190,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearInMemoryState, getCsrfToken, refreshCsrf]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, login, logout }),
-    [status, user, login, logout],
+    () => ({ status, user, getCsrfToken, login, logout }),
+    [status, user, getCsrfToken, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
