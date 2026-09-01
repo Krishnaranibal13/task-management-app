@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Task board (Phase 5B): four-column Kanban with approved operations.
@@ -11,7 +11,7 @@
  *    /status endpoint with payload exactly {status}.
  *
  * State rule: after every mutation the board updates from the
- * BACKEND-CONFIRMED response — no optimistic fake task state.
+ * BACKEND-CONFIRMED response â€” no optimistic fake task state.
  * Status can always be changed via an accessible <select>; no
  * drag-and-drop dependency.
  */
@@ -19,6 +19,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import CommentsPanel from "./comments-panel";
+import KanbanColumn from "./components/kanban-column";
+import TaskFormDialog from "./components/task-form-dialog";
+import DeleteConfirmDialog from "./components/delete-confirm-dialog";
 import {
   createTask,
   deleteTask,
@@ -50,9 +53,17 @@ const EMPTY_FORM = {
 
 function BoardSkeleton() {
   return (
-    <section className="card" aria-busy="true" aria-live="polite">
-      <h1 id="board-heading">Tasks</h1>
-      <p className="subtitle">Loading tasks…</p>
+    <section className="login-card" aria-busy="true" aria-live="polite" style={{ margin: "auto", marginTop: "calc(50vh - 150px)", textAlign: "center" }}>
+      <div className="appbar-logo" style={{ justifyContent: "center", marginBottom: "var(--space-4)" }} aria-hidden="true">
+        <div className="appbar-logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+        </div>
+        <h1 className="login-title">Task Management MVP</h1>
+      </div>
+      <p className="subtitle">Loading tasksâ€¦</p>
     </section>
   );
 }
@@ -67,13 +78,17 @@ export default function TaskBoard() {
   const [users, setUsers] = useState<DirectoryUser[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+    // Explicit dialog-open state: the create/edit dialog must only render when
+    // deliberately opened. Deriving it from form-field emptiness is fragile — a
+    // fresh Create form is empty, so the dialog would never open (CHG-002).
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [commentsTask, setCommentsTask] = useState<Task | null>(null);
+  const [statusSavingId, setStatusSavingId] = useState<number | null>(null);
 
   const opts = useMemo(() => ({ getCsrfToken }), [getCsrfToken]);
 
@@ -97,25 +112,18 @@ export default function TaskBoard() {
     void refetch();
   }, [refetch]);
 
-  const emailFor = useCallback(
-    (assigneeId: number | null): string | null =>
-      assigneeId === null
-        ? null
-        : users.find((u) => u.id === assigneeId)?.email ?? null,
-    [users],
-  );
-
   // ---- form helpers -------------------------------------------------------
 
   function openCreate() {
-    setEditingId(null);
-    setForm({ ...EMPTY_FORM });
-    setFormError(null);
-    setShowForm(true);
-  }
+      setShowForm(true);
+      setEditingId(null);
+      setForm({ ...EMPTY_FORM });
+      setFormError(null);
+    }
 
-  function openEdit(task: Task) {
-    setEditingId(task.id);
+    function openEdit(task: Task) {
+      setShowForm(true);
+      setEditingId(task.id);
     setForm({
       title: task.title,
       description: task.description ?? "",
@@ -125,15 +133,14 @@ export default function TaskBoard() {
       due_date: task.due_date ?? "",
     });
     setFormError(null);
-    setShowForm(true);
   }
 
   function closeForm() {
-    setShowForm(false);
-    setEditingId(null);
-    setFormError(null);
-    setForm({ ...EMPTY_FORM });
-  }
+      setShowForm(false);
+      setEditingId(null);
+      setFormError(null);
+      setForm({ ...EMPTY_FORM });
+    }
 
   async function submitForm(event: React.FormEvent) {
     event.preventDefault();
@@ -209,12 +216,15 @@ export default function TaskBoard() {
   async function changeStatus(task: Task, next: TaskStatus) {
     if (next === task.status) return;
     setBoardError(null);
+    setStatusSavingId(task.id);
     try {
       // Dedicated endpoint for BOTH roles; payload exactly {status}.
       const updated = await updateTaskStatus(task.id, next, opts);
       setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     } catch {
       setBoardError(GENERIC_ERROR);
+    } finally {
+      setStatusSavingId(null);
     }
   }
 
@@ -252,12 +262,12 @@ export default function TaskBoard() {
 
   if (loadError !== null && tasks.length === 0) {
     return (
-      <section className="card" aria-labelledby="board-heading">
-        <h1 id="board-heading">Tasks</h1>
+      <section className="login-card" aria-labelledby="board-heading" style={{ margin: "auto", marginTop: "calc(50vh - 150px)" }}>
+        <h1 id="board-heading" className="login-title">Tasks</h1>
         <p className="form-error" role="alert">
           Unable to load tasks. Please try again.
         </p>
-        <button type="button" className="primary" onClick={() => void refetch()}>
+        <button type="button" className="btn btn-primary" onClick={() => void refetch()}>
           Retry
         </button>
       </section>
@@ -265,156 +275,56 @@ export default function TaskBoard() {
   }
 
   return (
-    <section className="card board-card" aria-labelledby="board-heading">
-      <header className="shell-header">
+    <section aria-labelledby="board-heading">
+      <header className="toolbar">
         <div>
-          <h1 id="board-heading">Tasks</h1>
-          <p className="subtitle">
-            Kanban board · {tasks.length} task{tasks.length === 1 ? "" : "s"}
+          <h1 id="board-heading" className="toolbar-title">Tasks</h1>
+          <p className="toolbar-subtitle">
+            Kanban board Â· {tasks.length} task{tasks.length === 1 ? "" : "s"}
           </p>
         </div>
         {isPm && (
-          <button type="button" className="primary" onClick={openCreate}>
-            + New Task
-          </button>
+          <div className="toolbar-actions">
+            <button type="button" className="btn btn-primary" onClick={openCreate}>
+              + New Task
+            </button>
+          </div>
         )}
       </header>
 
       {boardError !== null && (
-        <p className="form-error" role="alert">
-          {boardError}
-        </p>
-      )}
-
-      {/* Accessible create/edit dialog (native <dialog>-less MVP pattern) */}
-      {showForm && (
-        <form className="task-form" onSubmit={(e) => void submitForm(e)} noValidate>
-          <h2>{editingId === null ? "New Task" : `Edit Task #${editingId}`}</h2>
-
-          <label htmlFor="t-title">Title *</label>
-          <input
-            id="t-title"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            required
-          />
-
-          <label htmlFor="t-desc">Description</label>
-          <textarea
-            id="t-desc"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={3}
-          />
-
-          <label htmlFor="t-assignee">Assignee</label>
-          <select
-            id="t-assignee"
-            value={String(form.assignee_id)}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                assignee_id:
-                  e.target.value === "" ? "" : Number(e.target.value),
-              })
-            }
-          >
-            <option value="">Unassigned</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.email} ({u.role})
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor="t-priority">Priority *</label>
-          <select
-            id="t-priority"
-            value={String(form.priority)}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                priority: e.target.value as "" | TaskPriority,
-              })
-            }
-            required
-          >
-            <option value="" disabled>
-              Select priority…
-            </option>
-            {TASK_PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {PRIORITY_LABELS[p]}
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor="t-status">Status *</label>
-          <select
-            id="t-status"
-            value={String(form.status)}
-            onChange={(e) => setForm({ ...form, status: e.target.value as TaskStatus })}
-            required
-          >
-            <option value="" disabled>
-              Select status…
-            </option>
-            {TASK_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor="t-due">Due date</label>
-          <input
-            id="t-due"
-            type="date"
-            value={form.due_date}
-            onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-          />
-
-          {formError !== null && (
-            <p className="form-error" role="alert">
-              {formError}
-            </p>
-          )}
-
-          <div className="form-actions">
-            <button
-              type="button"
-              onClick={closeForm}
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="primary" disabled={saving}>
-              {saving ? "Saving…" : editingId === null ? "Create Task" : "Save Changes"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Accessible delete confirmation */}
-      {confirmDeleteId !== null && (
-        <div className="confirm-box" role="alertdialog" aria-modal="false">
-          <p>Delete task?</p>
-          <div className="form-actions">
-            <button type="button" onClick={() => setConfirmDeleteId(null)}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="danger"
-              onClick={() => void confirmDelete()}
-            >
-              Delete
-            </button>
-          </div>
+        <div className="error-banner" role="alert">
+          <span className="error-banner-message">{boardError}</span>
+          <button type="button" className="btn btn-secondary error-banner-retry" onClick={() => void refetch()}>
+            Retry
+          </button>
         </div>
       )}
 
-      {/* Accessible comments dialog (approved roles gate the form) */}
+      {/* Task create/edit modal dialog — rendered only when explicitly opened */}
+            {showForm && (
+              <TaskFormDialog
+          editingId={editingId}
+          form={form}
+          setForm={setForm}
+          formError={formError}
+          saving={saving}
+          users={users}
+          onSubmit={submitForm}
+          onClose={closeForm}
+        />
+      )}
+
+      {/* Delete confirmation modal alertdialog */}
+      {confirmDeleteId !== null && (
+        <DeleteConfirmDialog
+          task={tasks.find((t) => t.id === confirmDeleteId)!}
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
+
+      {/* Comments panel modal dialog */}
       {commentsTask !== null && (
         <CommentsPanel
           task={commentsTask}
@@ -425,110 +335,28 @@ export default function TaskBoard() {
         />
       )}
 
-      {/* Four-column Kanban — ALWAYS renders all four columns, even when
+      {/* Four-column Kanban â€” ALWAYS renders all four columns, even when
           empty (an optional empty-state hint sits above the grid). */}
       {tasks.length === 0 && (
-        <p className="muted" aria-live="polite">
-          No tasks yet{isPm ? " — use “+ New Task” to add the first one." : "."}
+        <p className="empty-board" aria-live="polite">
+          No tasks yet{isPm ? ' â€” use "+ New Task" to add the first one.' : "."}
         </p>
       )}
       <div className="board" role="list" aria-label="Kanban columns">
         {TASK_STATUSES.map((status) => (
-          <div
+          <KanbanColumn
             key={status}
-            className="column"
-            role="listitem"
-            aria-label={`Column ${STATUS_LABELS[status]} (${byStatus.get(status)?.length ?? 0} tasks)`}
-          >
-            <h2>
-              {STATUS_LABELS[status]}{" "}
-              <span className="count">{byStatus.get(status)?.length ?? 0}</span>
-            </h2>
-            {(byStatus.get(status) ?? []).map((task) => {
-                const assigneeEmail = emailFor(task.assignee_id);
-                const ownTask =
-                  role === "developer" &&
-                  user !== null &&
-                  task.assignee_id === user.user_id;
-                return (
-                  <article key={task.id} className="task-card">
-                    <h3>{task.title}</h3>
-                    <p className="task-meta">
-                      <span className={`pill pill-${task.priority}`}>
-                        Priority: {PRIORITY_LABELS[task.priority]}
-                      </span>
-                    </p>
-                    <p className="task-meta">
-                      {assigneeEmail === null ? (
-                        <span className="muted">Unassigned</span>
-                      ) : (
-                        <span>Assignee: {assigneeEmail}</span>
-                      )}
-                    </p>
-                    {task.due_date !== null && (
-                      <p className="task-meta">
-                        Due: <time dateTime={task.due_date}>{task.due_date}</time>
-                      </p>
-                    )}
-                    <div className="task-actions">
-                      {isPm || ownTask ? (
-                        <label>
-                          <span className="visually-hidden">
-                            Status for {task.title}
-                          </span>
-                          <select
-                            aria-label={`Change status of ${task.title}`}
-                            value={task.status}
-                            onChange={(e) =>
-                              void changeStatus(task, e.target.value as TaskStatus)
-                            }
-                          >
-                            {TASK_STATUSES.map((s) => (
-                              <option key={s} value={s}>
-                                {STATUS_LABELS[s]}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ) : (
-                        // Unauthorized Developer tasks: status as read-only
-                        // text — NO mutation control rendered at all.
-                        <p className="task-meta">
-                          Status: {STATUS_LABELS[task.status]}
-                        </p>
-                      )}
-                      {isPm && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => openEdit(task)}
-                            aria-label={`Edit ${task.title}`}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(task.id)}
-                            aria-label={`Delete ${task.title}`}
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                      {/* Comments: BOTH approved roles, regardless of
-                          assignment (Phase 4B/5C contract). */}
-                      <button
-                        type="button"
-                        onClick={() => setCommentsTask(task)}
-                        aria-label={`Comments for ${task.title}`}
-                      >
-                        Comments
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-          </div>
+            status={status}
+            tasks={byStatus.get(status) ?? []}
+            users={users}
+            role={role}
+            user={user}
+            onChangeStatus={changeStatus}
+            onOpenEdit={openEdit}
+            onConfirmDelete={setConfirmDeleteId}
+            onOpenComments={setCommentsTask}
+            statusSavingId={statusSavingId}
+          />
         ))}
       </div>
     </section>

@@ -9,7 +9,7 @@
  *   error announced via role="alert".
  */
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -21,6 +21,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,19 +39,29 @@ export default function LoginForm() {
         setError(GENERIC_LOGIN_ERROR);
       }
       setPassword("");
+      // Focus password field after credential failure
+      passwordRef.current?.focus();
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <section className="card" aria-labelledby="login-heading">
-      <h1 id="login-heading">Task Management MVP</h1>
-      <p className="subtitle">Sign in to continue</p>
+    <section className="login-card" aria-labelledby="login-heading" style={{ margin: "auto", marginTop: "calc(50vh - 200px)" }}>
+      <div className="appbar-logo" style={{ justifyContent: "center", marginBottom: "var(--space-4)" }} aria-hidden="true">
+        <div className="appbar-logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+        </div>
+        <h1 id="login-heading" className="login-title">Task Management MVP</h1>
+      </div>
+      <p className="login-subtitle">Sign in to continue</p>
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="field">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email" className="field-label">Email</label>
           <input
             id="email"
             name="email"
@@ -61,11 +72,12 @@ export default function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={submitting}
             autoFocus
+            className="field-input"
           />
         </div>
 
         <div className="field">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password" className="field-label">Password</label>
           <input
             id="password"
             name="password"
@@ -75,18 +87,22 @@ export default function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={submitting}
+            ref={passwordRef}
+            className="field-input"
           />
         </div>
 
         {error !== null && (
-          <p className="form-error" role="alert">
+          <p className="field-error" role="alert">
             {error}
           </p>
         )}
 
-        <button type="submit" className="primary" disabled={submitting}>
-          {submitting ? "Signing in…" : "Sign in"}
-        </button>
+        <div className="form-actions" style={{ width: "100%" }}>
+          <button type="submit" className="btn btn-primary" disabled={submitting} style={{ width: "100%" }}>
+            {submitting ? "Signing in…" : "Sign in"}
+          </button>
+        </div>
       </form>
     </section>
   );

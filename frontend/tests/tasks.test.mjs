@@ -37,15 +37,19 @@ test("tasks-api defines exactly four statuses and three priorities", async () =>
 });
 
 test("PM-only controls gated by role; developer status control gated by assignee", () => {
-  const src = readFileSync(join(FRONTEND, "app/task-board.tsx"), "utf8");
-  assert.match(src, /\+ New Task/);
-  assert.match(src, /const isPm = role === "pm";/);
-  // Status selector rendered ONLY for PM or own-assigned developer;
-  // unauthorized tasks get read-only text instead of a control.
-  assert.match(src, /\{isPm \|\| ownTask \? \(/);
-  assert.match(src, /Status: \{STATUS_LABELS\[task\.status\]\}/);
-  // Edit/Delete buttons only inside the isPm block.
-  const pmBlock = src.split("{isPm && (")[1] ?? "";
+  // Check KanbanColumn for "+ New Task" trigger and column rendering
+  const boardSrc = readFileSync(join(FRONTEND, "app/task-board.tsx"), "utf8");
+  assert.match(boardSrc, /\+ New Task/);
+  assert.match(boardSrc, /const isPm = role === "pm";/);
+  
+  // Check TaskCard for the role-gated status selector and read-only text
+  const cardSrc = readFileSync(join(FRONTEND, "app/components/task-card.tsx"), "utf8");
+  assert.match(cardSrc, /\{isPm \|\| ownTask \? \(/);
+  assert.match(cardSrc, /Status: \{STATUS_LABELS\[task\.status\]\}/);
+  
+  // Check TaskCard for PM-only Edit/Delete buttons
+  assert.match(cardSrc, /\{isPm \&\& \(/);
+  const pmBlock = cardSrc.split("{isPm && (")[1] ?? "";
   assert.ok(pmBlock.includes("Edit"));
   assert.ok(pmBlock.includes("Delete"));
 });
@@ -58,21 +62,23 @@ test("developer status changes use the dedicated /status endpoint", () => {
 });
 
 test("delete requires confirmation before calling the API", () => {
-  const src = readFileSync(join(FRONTEND, "app/task-board.tsx"), "utf8");
-  assert.match(src, /Delete task\?/);
-  assert.match(src, /confirmDeleteId/);
-  // Delete button sets confirmDeleteId instead of deleting directly.
-  assert.match(src, /setConfirmDeleteId\(task\.id\)/);
-  // Actual deletion happens only in confirmDelete().
-  const confirmIdx = src.indexOf("async function confirmDelete");
+  // The DeleteConfirmDialog has the confirmation text
+  const deleteDialogSrc = readFileSync(join(FRONTEND, "app/components/delete-confirm-dialog.tsx"), "utf8");
+  assert.match(deleteDialogSrc, /Delete task\?/);
+  // Delete button in TaskCard calls onConfirmDelete which sets confirmDeleteId
+  const cardSrc = readFileSync(join(FRONTEND, "app/components/task-card.tsx"), "utf8");
+  assert.match(cardSrc, /onConfirmDelete\(task\.id\)/);
+  // Actual deletion happens only in confirmDelete() in TaskBoard
+  const boardSrc = readFileSync(join(FRONTEND, "app/task-board.tsx"), "utf8");
+  const confirmIdx = boardSrc.indexOf("async function confirmDelete");
   assert.ok(confirmIdx > -1);
-  assert.match(src.slice(confirmIdx), /deleteTask\(confirmDeleteId, opts\)/);
+  assert.match(boardSrc.slice(confirmIdx), /deleteTask\(confirmDeleteId, opts\)/);
 });
 
 test("assignee display resolves email and shows Unassigned when null", () => {
-  const src = readFileSync(join(FRONTEND, "app/task-board.tsx"), "utf8");
-  assert.match(src, /Unassigned/);
-  assert.match(src, /users\.find\(\(u\) => u\.id === assigneeId\)\?\.email/);
+  const cardSrc = readFileSync(join(FRONTEND, "app/components/task-card.tsx"), "utf8");
+  assert.match(cardSrc, /Unassigned/);
+  assert.match(cardSrc, /users\.find\(\(u\) => u\.id === assigneeId\)\?\.email/);
 });
 
 test("unknown role gets no PM controls (fail-closed)", () => {

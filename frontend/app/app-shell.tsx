@@ -46,46 +46,53 @@ export default function AppShell() {
     }
   }
 
+  const role = user?.role;
+  const roleLabel = role ? (ROLE_LABELS[role] ?? role) : "";
+  const roleBadgeClass = role === "pm"
+    ? "role-badge role-badge--pm"
+    : role === "developer"
+    ? "role-badge role-badge--developer"
+    : "role-badge role-badge--unknown";
+
   return (
-    <section className="card" aria-labelledby="shell-heading">
-      <header className="shell-header">
-        <div>
-          <h1 id="shell-heading">Task Management MVP</h1>
-          <p className="subtitle">Signed in</p>
+    <>
+      <header className="appbar" role="banner">
+        <div className="appbar-left">
+          <div className="appbar-logo" aria-hidden="true">
+            <div className="appbar-logo-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
+            </div>
+            <span className="appbar-wordmark">Task Management MVP</span>
+          </div>
         </div>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => void handleLogout()}
-          disabled={loggingOut}
-        >
-          {loggingOut ? "Logging out…" : "Log out"}
-        </button>
+        <div className="appbar-right">
+          <span className="appbar-email" title={user?.email ?? ""}>
+            {user?.email ?? ""}
+          </span>
+          <span className={roleBadgeClass}>{roleLabel}</span>
+          <span className="appbar-divider" aria-hidden="true" />
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => void handleLogout()}
+            disabled={loggingOut}
+            aria-busy={loggingOut}
+          >
+            {loggingOut ? "Logging out…" : "Log out"}
+          </button>
+        </div>
       </header>
-
       {logoutError !== null && (
-        <p className="form-error" role="alert">
-          {logoutError}
-        </p>
+        <div className="error-banner" role="alert" style={{ margin: "0 var(--space-5) var(--space-4)" }}>
+          <span className="error-banner-message">{logoutError}</span>
+        </div>
       )}
-
-      <dl className="whoami">
-        <div className="stackRow">
-          <dt>Email</dt>
-          <dd>{user?.email}</dd>
-        </div>
-        <div className="stackRow">
-          <dt>Role</dt>
-          <dd>{user ? (ROLE_LABELS[user.role] ?? user.role) : ""}</dd>
-        </div>
-      </dl>
-
-      <div className="placeholder" aria-label="Tasks placeholder">
-        <p>Task workspace</p>
-        <p className="muted">
-          The task board will appear here in an upcoming phase.
-        </p>
-      </div>
-    </section>
+      <main className="page-content" style={{ padding: "0 var(--space-5) var(--space-5)" }}>
+        {logoutError === null ? null : null}
+      </main>
+    </>
   );
 }

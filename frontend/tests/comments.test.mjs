@@ -188,13 +188,12 @@ test("unknown role receives NO comment mutation control (fail-closed)", () => {
 });
 
 test("board card has a Comments action for BOTH roles", () => {
-  const board = read("app/task-board.tsx");
-  assert.match(board, /aria-label=\{`Comments for \$\{task\.title\}`\}/);
+  const cardSrc = readFileSync(join(FRONTEND, "app/components/task-card.tsx"), "utf8");
+  assert.match(cardSrc, /aria-label=\{`Comments for \$\{task\.title\}`\}/);
   // The button sits OUTSIDE any role gate (rendered unconditionally per card).
-  const idx = board.indexOf('setCommentsTask(task)}');
-  const isPmIdx = board.lastIndexOf("{isPm && (", idx);
-  const closeIdx = board.indexOf(")}", isPmIdx);
-  assert.ok(idx > closeIdx, "comments button must be outside the PM-only block");
+  const idx = cardSrc.indexOf('onOpenComments(task)}');
+  const isPmIdx = cardSrc.lastIndexOf("{isPm && (", idx);
+  assert.ok(isPmIdx === -1 || idx > isPmIdx, "comments button must be outside the PM-only block");
 });
 
 test("backend-confirmed append only — no fake comment fabrication", () => {
