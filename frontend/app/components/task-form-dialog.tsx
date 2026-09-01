@@ -118,6 +118,9 @@ export default function TaskFormDialog({
             ✕
           </button>
         </header>
+        {editingId === null && (
+          <p className="muted">Required fields are marked with *</p>
+        )}
         <form className="dialog-body" onSubmit={onSubmit} noValidate>
           <div className="dialog-field">
             <label htmlFor="t-title" className="dialog-field-label">
