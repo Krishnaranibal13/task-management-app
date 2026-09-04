@@ -46,7 +46,8 @@ cd frontend && node tests/auth.test.mjs                # example unit suite
 node tests/browser-flows-5c.mjs                        # browser flow (needs running stack)
 ```
 
-## 2. Final validation evidence at checkpoint `2804f1b`
+## 2. Historical validation evidence at checkpoint `2804f1b`
+This checkpoint represents the original validated MVP baseline. Later frontend redesign and dependency-maintenance updates were validated separately and do not invalidate the historical evidence recorded below.
 
 Approved pipeline: Development validation → independent QA/browser validation →
 final independent security audit → SEC-MED-01 correction → independent targeted

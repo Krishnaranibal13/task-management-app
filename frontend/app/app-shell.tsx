@@ -1,21 +1,6 @@
 "use client";
 
-/**
- * Minimal authenticated application shell (Phase 5A).
- *
- * Contains ONLY: app name, user email, role label, logout, and a
- * placeholder for the upcoming Task UI. Task/Kanban/Comment features
- * arrive in later phases. Role label is a UX hint only — backend
- * authorization remains authoritative.
- *
- * Logout failure handling: the backend session revocation is
- * authoritative. If it fails (network/server error), the user REMAINS
- * logged in and a sanitized, accessible error is announced — the UI
- * never fakes a logout that did not happen. The button stays usable so
- * the user can simply retry.
- */
-
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -24,11 +9,78 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const GENERIC_LOGOUT_ERROR = "Unable to log out. Please try again.";
+const THEME_KEY = "tm-theme";
 
-export default function AppShell() {
+type Theme = "light" | "dark";
+
+function BrandMark() {
+  return (
+    <span className="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 11l3 3L22 4" />
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+    </span>
+  );
+}
+
+function TasksIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M8 9h8M8 13h5" />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <path d="M16 17l5-5-5-5M21 12H9" />
+    </svg>
+  );
+}
+
+export default function AppShell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [theme, setTheme] = useState<Theme>("light");
+
+  useEffect(() => {
+    setTheme(
+      document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+    );
+  }, []);
+
+  function toggleTheme() {
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    setTheme(next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      // Theme persistence is optional.
+    }
+  }
 
   async function handleLogout() {
     if (loggingOut) return;
@@ -36,10 +88,7 @@ export default function AppShell() {
     setLoggingOut(true);
     try {
       await logout();
-      // Success → AuthProvider cleared state; login UI renders next.
     } catch {
-      // Sanitized only: no error object details (they may embed request
-      // or network specifics). State intentionally NOT cleared.
       setLogoutError(GENERIC_LOGOUT_ERROR);
     } finally {
       setLoggingOut(false);
@@ -48,51 +97,91 @@ export default function AppShell() {
 
   const role = user?.role;
   const roleLabel = role ? (ROLE_LABELS[role] ?? role) : "";
-  const roleBadgeClass = role === "pm"
-    ? "role-badge role-badge--pm"
-    : role === "developer"
-    ? "role-badge role-badge--developer"
-    : "role-badge role-badge--unknown";
+  const roleBadgeClass =
+    role === "pm"
+      ? "role-badge role-badge--pm"
+      : role === "developer"
+        ? "role-badge role-badge--developer"
+        : "role-badge role-badge--unknown";
+
+  const email = user?.email ?? "";
+  const avatarLabel = email ? email.slice(0, 2).toUpperCase() : "TM";
 
   return (
-    <>
-      <header className="appbar" role="banner">
-        <div className="appbar-left">
-          <div className="appbar-logo" aria-hidden="true">
-            <div className="appbar-logo-mark">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M9 11l3 3L22 4" />
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-              </svg>
+    <div className="application-shell">
+      <aside className="sidebar" aria-label="Application navigation">
+        <div>
+          <div className="sidebar-brand">
+            <BrandMark />
+            <div>
+              <span className="sidebar-brand-title">Task Management</span>
+              <span className="sidebar-brand-subtitle">Workspace</span>
             </div>
-            <span className="appbar-wordmark">Task Management MVP</span>
           </div>
+
+          <nav className="sidebar-nav">
+            <p className="sidebar-section-label">Workspace</p>
+            <div className="sidebar-link sidebar-link--active" aria-current="page">
+              <span className="sidebar-link-icon"><TasksIcon /></span>
+              <span>Tasks</span>
+            </div>
+          </nav>
         </div>
-        <div className="appbar-right">
-          <span className="appbar-email" title={user?.email ?? ""}>
-            {user?.email ?? ""}
-          </span>
-          <span className={roleBadgeClass}>{roleLabel}</span>
-          <span className="appbar-divider" aria-hidden="true" />
+
+        <div className="sidebar-bottom">
+          <div className="sidebar-user">
+            <span className="user-avatar" aria-hidden="true">{avatarLabel}</span>
+            <div className="sidebar-user-copy">
+              <span className="sidebar-user-email" title={email}>{email}</span>
+              <span className="sidebar-user-role">{roleLabel}</span>
+            </div>
+          </div>
+
           <button
             type="button"
-            className="btn btn-ghost"
+            className="sidebar-action"
             onClick={() => void handleLogout()}
             disabled={loggingOut}
             aria-busy={loggingOut}
           >
-            {loggingOut ? "Logging out…" : "Log out"}
+            <span className="sidebar-link-icon"><LogoutIcon /></span>
+            <span>{loggingOut ? "Logging out…" : "Log out"}</span>
           </button>
         </div>
-      </header>
-      {logoutError !== null && (
-        <div className="error-banner" role="alert" style={{ margin: "0 var(--space-5) var(--space-4)" }}>
-          <span className="error-banner-message">{logoutError}</span>
-        </div>
-      )}
-      <main className="page-content" style={{ padding: "0 var(--space-5) var(--space-5)" }}>
-        {logoutError === null ? null : null}
-      </main>
-    </>
+      </aside>
+
+      <div className="workspace">
+        <header className="topbar">
+          <div>
+            <p className="topbar-eyebrow">Workspace</p>
+            <h1 className="topbar-title">Tasks</h1>
+          </div>
+
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+            </button>
+            <span className={roleBadgeClass}>{roleLabel}</span>
+          </div>
+        </header>
+
+        {logoutError !== null && (
+          <div className="shell-alert" role="alert">
+            <span>{logoutError}</span>
+            <button type="button" className="btn btn-secondary" onClick={() => void handleLogout()} disabled={loggingOut}>
+              Retry
+            </button>
+          </div>
+        )}
+
+        <main className="workspace-content">{children}</main>
+      </div>
+    </div>
   );
 }

@@ -1,20 +1,4 @@
-﻿"use client";
-
-/**
- * Task board (Phase 5B): four-column Kanban with approved operations.
- *
- * Role model (backend remains authoritative; UI is a UX hint):
- *  - PM: create (+ New Task), edit (all approved fields), delete
- *    (with accessible confirmation), assign/reassign, status changes.
- *  - Developer: view all tasks + readable assignee emails; status
- *    selector ONLY on tasks assigned to them, using the dedicated
- *    /status endpoint with payload exactly {status}.
- *
- * State rule: after every mutation the board updates from the
- * BACKEND-CONFIRMED response â€” no optimistic fake task state.
- * Status can always be changed via an accessible <select>; no
- * drag-and-drop dependency.
- */
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -27,9 +11,6 @@ import {
   deleteTask,
   listTasks,
   listUsers,
-  PRIORITY_LABELS,
-  STATUS_LABELS,
-  TASK_PRIORITIES,
   TASK_STATUSES,
   updateTask,
   updateTaskStatus,
@@ -46,24 +27,31 @@ const EMPTY_FORM = {
   description: "",
   assignee_id: "" as "" | number,
   priority: "" as "" | TaskPriority,
-  // No invented default: the PM must explicitly choose a status.
   status: "" as TaskStatus | "",
   due_date: "",
 };
 
 function BoardSkeleton() {
   return (
-    <section className="login-card" aria-busy="true" aria-live="polite" style={{ margin: "auto", marginTop: "calc(50vh - 150px)", textAlign: "center" }}>
-      <div className="appbar-logo" style={{ justifyContent: "center", marginBottom: "var(--space-4)" }} aria-hidden="true">
-        <div className="appbar-logo-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M9 11l3 3L22 4" />
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-          </svg>
-        </div>
-        <h1 className="login-title">Task Management MVP</h1>
+    <section className="board-skeleton" aria-busy="true" aria-live="polite">
+      <div className="skeleton-row skeleton-row--title" />
+      <div className="summary-grid">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div className="summary-card" key={index}>
+            <div className="skeleton-row" />
+            <div className="skeleton-row skeleton-row--short" />
+          </div>
+        ))}
       </div>
-      <p className="subtitle">Loading tasksâ€¦</p>
+      <div className="board">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div className="column" key={index}>
+            <div className="skeleton-row" />
+            <div className="skeleton-card" />
+            <div className="skeleton-card" />
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -78,11 +66,8 @@ export default function TaskBoard() {
   const [users, setUsers] = useState<DirectoryUser[]>([]);
   const [boardError, setBoardError] = useState<string | null>(null);
 
-    // Explicit dialog-open state: the create/edit dialog must only render when
-    // deliberately opened. Deriving it from form-field emptiness is fragile — a
-    // fresh Create form is empty, so the dialog would never open (CHG-002).
-    const [showForm, setShowForm] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -112,18 +97,16 @@ export default function TaskBoard() {
     void refetch();
   }, [refetch]);
 
-  // ---- form helpers -------------------------------------------------------
-
   function openCreate() {
-      setShowForm(true);
-      setEditingId(null);
-      setForm({ ...EMPTY_FORM });
-      setFormError(null);
-    }
+    setShowForm(true);
+    setEditingId(null);
+    setForm({ ...EMPTY_FORM });
+    setFormError(null);
+  }
 
-    function openEdit(task: Task) {
-      setShowForm(true);
-      setEditingId(task.id);
+  function openEdit(task: Task) {
+    setShowForm(true);
+    setEditingId(task.id);
     setForm({
       title: task.title,
       description: task.description ?? "",
@@ -136,11 +119,11 @@ export default function TaskBoard() {
   }
 
   function closeForm() {
-      setShowForm(false);
-      setEditingId(null);
-      setFormError(null);
-      setForm({ ...EMPTY_FORM });
-    }
+    setShowForm(false);
+    setEditingId(null);
+    setFormError(null);
+    setForm({ ...EMPTY_FORM });
+  }
 
   async function submitForm(event: React.FormEvent) {
     event.preventDefault();
@@ -159,15 +142,16 @@ export default function TaskBoard() {
     const assigneeValue =
       form.assignee_id === "" ? null : Number(form.assignee_id);
     const dueDateValue = form.due_date === "" ? null : form.due_date;
+
     setSaving(true);
     try {
       if (editingId === null) {
-        // CREATE: all approved fields; required ones explicitly chosen.
         if (!form.status) {
           setFormError("Status is required.");
           setSaving(false);
           return;
         }
+
         const created = await createTask(
           {
             title: form.title.trim(),
@@ -181,46 +165,44 @@ export default function TaskBoard() {
         );
         setTasks((prev) => [...prev, created]);
       } else {
-        // EDIT (true partial PATCH): send ONLY changed fields. Nullable
-        // fields may be explicitly null; required fields never null.
-        const current = tasks.find((t) => t.id === editingId);
+        const current = tasks.find((task) => task.id === editingId);
         if (!current) throw new Error("missing task");
+
         const patch: Record<string, unknown> = {};
-        if (form.title.trim() !== current.title)
-          patch.title = form.title.trim();
-        if ((form.description || null) !== current.description)
+        if (form.title.trim() !== current.title) patch.title = form.title.trim();
+        if ((form.description || null) !== current.description) {
           patch.description = form.description === "" ? null : form.description;
-        if (assigneeValue !== current.assignee_id)
-          patch.assignee_id = assigneeValue;
-        if (form.priority !== current.priority)
-          patch.priority = form.priority as TaskPriority;
-        if (form.due_date !== (current.due_date ?? ""))
-          patch.due_date = dueDateValue;
+        }
+        if (assigneeValue !== current.assignee_id) patch.assignee_id = assigneeValue;
+        if (form.priority !== current.priority) patch.priority = form.priority as TaskPriority;
+        if (form.due_date !== (current.due_date ?? "")) patch.due_date = dueDateValue;
+
         if (Object.keys(patch).length > 0) {
           const updated = await updateTask(editingId, patch, opts);
           setTasks((prev) =>
-            prev.map((t) => (t.id === updated.id ? updated : t)),
+            prev.map((task) => (task.id === updated.id ? updated : task)),
           );
         }
       }
+
       closeForm();
     } catch {
-      setFormError(GENERIC_ERROR); // sanitized; state unchanged on failure
+      setFormError(GENERIC_ERROR);
     } finally {
       setSaving(false);
     }
   }
 
-  // ---- mutations ----------------------------------------------------------
-
   async function changeStatus(task: Task, next: TaskStatus) {
     if (next === task.status) return;
     setBoardError(null);
     setStatusSavingId(task.id);
+
     try {
-      // Dedicated endpoint for BOTH roles; payload exactly {status}.
       const updated = await updateTaskStatus(task.id, next, opts);
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      setTasks((prev) =>
+        prev.map((item) => (item.id === updated.id ? updated : item)),
+      );
     } catch {
       setBoardError(GENERIC_ERROR);
     } finally {
@@ -231,9 +213,10 @@ export default function TaskBoard() {
   async function confirmDelete() {
     if (confirmDeleteId === null) return;
     setBoardError(null);
+
     try {
       await deleteTask(confirmDeleteId, opts);
-      setTasks((prev) => prev.filter((t) => t.id !== confirmDeleteId));
+      setTasks((prev) => prev.filter((task) => task.id !== confirmDeleteId));
     } catch {
       setBoardError(GENERIC_ERROR);
     } finally {
@@ -241,32 +224,35 @@ export default function TaskBoard() {
     }
   }
 
-  // ---- derived ------------------------------------------------------------
-
   const byStatus = useMemo(() => {
     const map = new Map<TaskStatus, Task[]>();
-    for (const s of TASK_STATUSES) map.set(s, []);
-    for (const t of tasks) map.get(t.status)?.push(t);
+    for (const status of TASK_STATUSES) map.set(status, []);
+    for (const task of tasks) map.get(task.status)?.push(task);
     return map;
   }, [tasks]);
 
+  const summary = useMemo(
+    () => ({
+      total: tasks.length,
+      toDo: byStatus.get("to_do")?.length ?? 0,
+      inProgress: byStatus.get("in_progress")?.length ?? 0,
+      review: byStatus.get("review")?.length ?? 0,
+      done: byStatus.get("done")?.length ?? 0,
+    }),
+    [tasks.length, byStatus],
+  );
+
   const isPm = role === "pm";
-  // Phase 5C: explicit approved-role gate. Unknown/unapproved roles get
-  // NO comment mutation control (view-only); backend remains authoritative.
   const canComment = role === "pm" || role === "developer";
 
-  // Loading gate: keep the skeleton until the first refetch settles.
-  if (loading) {
-    return <BoardSkeleton />;
-  }
+  if (loading) return <BoardSkeleton />;
 
   if (loadError !== null && tasks.length === 0) {
     return (
-      <section className="login-card" aria-labelledby="board-heading" style={{ margin: "auto", marginTop: "calc(50vh - 150px)" }}>
-        <h1 id="board-heading" className="login-title">Tasks</h1>
-        <p className="form-error" role="alert">
-          Unable to load tasks. Please try again.
-        </p>
+      <section className="load-failure" aria-labelledby="board-heading">
+        <div className="load-failure-icon" aria-hidden="true">!</div>
+        <h2 id="board-heading">Unable to load tasks</h2>
+        <p>Please check your connection and try again.</p>
         <button type="button" className="btn btn-primary" onClick={() => void refetch()}>
           Retry
         </button>
@@ -274,23 +260,46 @@ export default function TaskBoard() {
     );
   }
 
+  const summaryCards = [
+    { label: "Total Tasks", value: summary.total, tone: "neutral" },
+    { label: "To Do", value: summary.toDo, tone: "todo" },
+    { label: "In Progress", value: summary.inProgress, tone: "progress" },
+    { label: "Review", value: summary.review, tone: "review" },
+    { label: "Done", value: summary.done, tone: "done" },
+  ];
+
   return (
-    <section aria-labelledby="board-heading">
-      <header className="toolbar">
+    <section className="board-page" aria-labelledby="board-heading">
+      <div className="board-hero">
         <div>
-          <h1 id="board-heading" className="toolbar-title">Tasks</h1>
-          <p className="toolbar-subtitle">
-            Kanban board Â· {tasks.length} task{tasks.length === 1 ? "" : "s"}
+          <p className="section-kicker">Task workspace</p>
+          <h2 id="board-heading" className="board-heading">
+            Plan, prioritize, and keep work moving.
+          </h2>
+          <p className="board-subheading">
+            Kanban board · {tasks.length} task{tasks.length === 1 ? "" : "s"} across four workflow stages
           </p>
         </div>
+
         {isPm && (
-          <div className="toolbar-actions">
-            <button type="button" className="btn btn-primary" onClick={openCreate}>
-              + New Task
-            </button>
-          </div>
+          <button type="button" className="btn btn-primary new-task-btn" onClick={openCreate}>
+            <span aria-hidden="true">＋</span>
+            New Task
+          </button>
         )}
-      </header>
+      </div>
+
+      <div className="summary-grid" aria-label="Task summary">
+        {summaryCards.map((card) => (
+          <article key={card.label} className={`summary-card summary-card--${card.tone}`}>
+            <div className="summary-card-top">
+              <span className="summary-label">{card.label}</span>
+              <span className="summary-dot" aria-hidden="true" />
+            </div>
+            <strong className="summary-value">{card.value}</strong>
+          </article>
+        ))}
+      </div>
 
       {boardError !== null && (
         <div className="error-banner" role="alert">
@@ -301,9 +310,8 @@ export default function TaskBoard() {
         </div>
       )}
 
-      {/* Task create/edit modal dialog — rendered only when explicitly opened */}
-            {showForm && (
-              <TaskFormDialog
+      {showForm && (
+        <TaskFormDialog
           editingId={editingId}
           form={form}
           setForm={setForm}
@@ -315,16 +323,14 @@ export default function TaskBoard() {
         />
       )}
 
-      {/* Delete confirmation modal alertdialog */}
       {confirmDeleteId !== null && (
         <DeleteConfirmDialog
-          task={tasks.find((t) => t.id === confirmDeleteId)!}
+          task={tasks.find((task) => task.id === confirmDeleteId)!}
           onConfirm={confirmDelete}
           onCancel={() => setConfirmDeleteId(null)}
         />
       )}
 
-      {/* Comments panel modal dialog */}
       {commentsTask !== null && (
         <CommentsPanel
           task={commentsTask}
@@ -335,13 +341,19 @@ export default function TaskBoard() {
         />
       )}
 
-      {/* Four-column Kanban â€” ALWAYS renders all four columns, even when
-          empty (an optional empty-state hint sits above the grid). */}
+      <div className="board-section-header">
+        <div>
+          <h3>Task board</h3>
+          <p>Move work forward using the status control on each task.</p>
+        </div>
+      </div>
+
       {tasks.length === 0 && (
         <p className="empty-board" aria-live="polite">
-          No tasks yet{isPm ? ' â€” use "+ New Task" to add the first one.' : "."}
+          No tasks yet{isPm ? ' — use "New Task" to add the first one.' : "."}
         </p>
       )}
+
       <div className="board" role="list" aria-label="Kanban columns">
         {TASK_STATUSES.map((status) => (
           <KanbanColumn

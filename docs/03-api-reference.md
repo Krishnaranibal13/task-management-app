@@ -1,7 +1,7 @@
 # 03 — API Reference
 
 Base URL (local compose): `http://localhost:8000`. All request and response
-bodies are JSON. Verified against source at commit `2804f1b`
+bodies are JSON. Originally verified against source at commit `2804f1b`. Later frontend and dependency-maintenance updates do not change the API contract unless explicitly documented.
 (`backend/app/main.py`, `backend/app/auth/routes.py`, `backend/app/api/routes/*`).
 
 ## Conventions applying to every endpoint

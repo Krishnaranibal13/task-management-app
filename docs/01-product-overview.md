@@ -1,7 +1,7 @@
 # 01 — Product Overview
 
 **Project:** Task Management MVP
-**Documented checkpoint:** commit `2804f1b` — *fix: add origin referer csrf validation* (working tree clean)
+**Historical validation checkpoint:** commit `2804f1b` — *fix: add origin referer csrf validation*. The product behavior documented below was originally validated at this checkpoint; the repository may contain later frontend and dependency-maintenance updates.
 **Status:** Implemented and validated at this checkpoint (Development validation, independent QA / browser validation, final independent security audit, SEC-MED-01 correction, independent targeted security retest).
 
 ---

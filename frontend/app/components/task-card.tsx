@@ -1,6 +1,12 @@
 "use client";
 
-import { Task, TaskStatus, STATUS_LABELS, PRIORITY_LABELS, type DirectoryUser } from "@/lib/tasks-api";
+import {
+  PRIORITY_LABELS,
+  STATUS_LABELS,
+  type DirectoryUser,
+  type Task,
+  type TaskStatus,
+} from "@/lib/tasks-api";
 
 interface TaskCardProps {
   task: Task;
@@ -17,11 +23,16 @@ interface TaskCardProps {
 function emailFor(assigneeId: number | null, users: DirectoryUser[]): string | null {
   return assigneeId === null
     ? null
-    : users.find((u) => u.id === assigneeId)?.email ?? null;
+    : users.find((user) => user.id === assigneeId)?.email ?? null;
 }
 
 function priorityPillClass(priority: string): string {
   return `priority-pill priority-pill--${priority}`;
+}
+
+function avatarText(email: string | null): string {
+  if (!email) return "—";
+  return email.slice(0, 2).toUpperCase();
 }
 
 export default function TaskCard({
@@ -44,85 +55,68 @@ export default function TaskCard({
 
   return (
     <article className="task-card" role="listitem">
-      <h3 className="task-card-title">{task.title}</h3>
-      <p className="task-meta">
+      <div className="task-card-head">
+        <h4 className="task-card-title">{task.title}</h4>
         <span className={priorityPillClass(task.priority)}>
-          Priority: {PRIORITY_LABELS[task.priority]}
+          {PRIORITY_LABELS[task.priority]}
         </span>
-      </p>
-      <p className="task-meta">
-        {assigneeEmail === null ? (
-          <span className="muted">Unassigned</span>
-        ) : (
-          <span>Assignee: {assigneeEmail}</span>
+      </div>
+
+      {task.description && <p className="task-description-preview">{task.description}</p>}
+
+      <div className="task-card-details">
+        <div className="task-assignee">
+          <span className="task-avatar" aria-hidden="true">{avatarText(assigneeEmail)}</span>
+          <span className="task-assignee-copy">
+            <span className="task-detail-label">Assignee</span>
+            <span className={assigneeEmail === null ? "muted" : ""} title={assigneeEmail ?? "Unassigned"}>
+              {assigneeEmail ?? "Unassigned"}
+            </span>
+          </span>
+        </div>
+
+        {task.due_date !== null && (
+          <div className="task-due">
+            <span className="task-detail-label">Due</span>
+            <time dateTime={task.due_date}>{task.due_date}</time>
+          </div>
         )}
-      </p>
-      {task.due_date !== null && (
-        <p className="task-meta task-due">
-          Due: <time dateTime={task.due_date}>{task.due_date}</time>
-        </p>
-      )}
-      {task.description && (
-        <p className="task-description-preview">
-          {task.description}
-        </p>
-      )}
+      </div>
+
       <div className="task-actions">
         {isPm || ownTask ? (
           <label className="task-status-select">
-            <span className="visually-hidden">
-              Change status of {task.title}
-            </span>
+            <span className="visually-hidden">Change status of {task.title}</span>
             <select
               aria-label={`Change status of ${task.title}`}
               value={task.status}
-              onChange={(e) =>
-                void onChangeStatus(task, e.target.value as TaskStatus)
-              }
+              onChange={(event) => void onChangeStatus(task, event.target.value as TaskStatus)}
               disabled={isBusy}
             >
-              {["to_do", "in_progress", "review", "done"].map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABELS[s as TaskStatus]}
-                </option>
+              {["to_do", "in_progress", "review", "done"].map((status) => (
+                <option key={status} value={status}>{STATUS_LABELS[status as TaskStatus]}</option>
               ))}
             </select>
           </label>
         ) : (
-          <p className="task-status-readonly">
-            Status: {STATUS_LABELS[task.status]}
-          </p>
+          <p className="task-status-readonly">Status: {STATUS_LABELS[task.status]}</p>
         )}
-        {isPm && (
-          <>
-            <button
-              type="button"
-              className="task-btn task-btn-edit"
-              onClick={() => onOpenEdit(task)}
-              aria-label={`Edit ${task.title}`}
-              disabled={isBusy}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className="task-btn task-btn-delete"
-              onClick={() => onConfirmDelete(task.id)}
-              aria-label={`Delete ${task.title}`}
-              disabled={isBusy}
-            >
-              Delete
-            </button>
-          </>
-        )}
-        <button
-          type="button"
-          className="task-btn task-btn-comments"
-          onClick={() => onOpenComments(task)}
-          aria-label={`Comments for ${task.title}`}
-        >
-          Comments
-        </button>
+
+        <div className="task-action-buttons">
+          {isPm && (
+            <>
+              <button type="button" className="task-btn task-btn-edit" onClick={() => onOpenEdit(task)} aria-label={`Edit ${task.title}`} disabled={isBusy}>
+                Edit
+              </button>
+              <button type="button" className="task-btn task-btn-delete" onClick={() => onConfirmDelete(task.id)} aria-label={`Delete ${task.title}`} disabled={isBusy}>
+                Delete
+              </button>
+            </>
+          )}
+          <button type="button" className="task-btn task-btn-comments" onClick={() => onOpenComments(task)} aria-label={`Comments for ${task.title}`}>
+            Comments
+          </button>
+        </div>
       </div>
     </article>
   );

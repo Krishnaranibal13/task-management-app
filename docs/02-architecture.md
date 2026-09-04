@@ -8,7 +8,7 @@
 
 | Layer | Technology | Version pin / evidence |
 |---|---|---|
-| Frontend | Next.js (App Router) + React + TypeScript | `frontend/package.json`: `next 15.5.23`, `react 19.1.0`, TypeScript ^5 |
+| Frontend | Next.js (App Router) + React + TypeScript | `frontend/package.json`: `next 15.5.24`, `react 19.1.0`, TypeScript ^5 |
 | Backend | FastAPI + Uvicorn (Python 3.11 image) | `backend/requirements.txt`: `fastapi 0.115.12`, `uvicorn 0.34.0` |
 | ORM / migrations | SQLAlchemy 2.0 + Alembic | `SQLAlchemy 2.0.40`, `alembic 1.15.2` |
 | Database | MySQL 8 (InnoDB, utf8mb4) | `docker-compose.yml`: `mysql:8.4` |

@@ -1,6 +1,6 @@
 # 04 — Authentication & Security
 
-All controls below were inspected in source at commit `2804f1b` and are
+The security controls documented below were originally inspected and validated against source at commit `2804f1b`. Later frontend redesign and dependency-maintenance updates do not alter these backend security controls unless explicitly documented.
 covered by the automated suites described in
 [06-testing-validation.md](06-testing-validation.md).
 

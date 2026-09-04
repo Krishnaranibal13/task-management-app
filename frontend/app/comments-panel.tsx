@@ -1,21 +1,5 @@
 "use client";
 
-/**
- * Accessible comments panel for a single Task (Phase 5C).
- *
- * Contract:
- *  - Exactly the two approved backend endpoints via the centralized
- *    client: GET/POST /api/tasks/{task_id}/comments.
- *  - Author identity resolved through the user directory (GET /api/users)
- *    to a readable email; neutral "Unknown user" fallback — never an
- *    invented identity, never a raw user ID as the primary label.
- *  - POST body is exactly {content}; author/task identity come from the
- *    backend session and route. Empty/whitespace submissions blocked.
- *  - No edit/delete/moderation controls exist anywhere (approved MVP).
- *  - Backend-confirmed state only: the exact returned Comment is appended
- *    after a successful POST; no fake IDs/timestamps/authors.
- */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createComment,
@@ -27,7 +11,6 @@ import {
 const GENERIC_ERROR = "Unable to load comments. Please try again.";
 const POST_ERROR = "Unable to add comment. Please try again.";
 
-/** Deterministic created_at formatting (UTC, ISO-like) for stable tests. */
 export function formatCommentDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -41,7 +24,6 @@ export function formatCommentDate(iso: string): string {
 interface CommentsPanelProps {
   task: { id: number; title: string };
   users: DirectoryUser[];
-  /** Approved-role gate: pm | developer. Unknown roles view-only. */
   canComment?: boolean;
   getCsrfToken?: () => string | null;
   onClose: () => void;
@@ -81,10 +63,9 @@ export default function CommentsPanel({
     void refetch();
   }, [refetch]);
 
-  // Escape closes the dialog (keyboard behavior).
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -92,24 +73,25 @@ export default function CommentsPanel({
 
   const emailFor = useCallback(
     (userId: number): string | null =>
-      users.find((u) => u.id === userId)?.email ?? null,
+      users.find((user) => user.id === userId)?.email ?? null,
     [users],
   );
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (posting) return;
+
     const trimmed = content.trim();
-    if (!trimmed) return; // no empty / whitespace-only submissions
+    if (!trimmed) return;
+
     setPostError(null);
     setPosting(true);
     try {
       const created = await createComment(task.id, { content: trimmed }, opts);
-      // Append the EXACT backend-confirmed comment.
       setComments((prev) => [...prev, created]);
       setContent("");
     } catch {
-      setPostError(POST_ERROR); // sanitized; nothing appended on failure
+      setPostError(POST_ERROR);
     } finally {
       setPosting(false);
     }
@@ -119,8 +101,8 @@ export default function CommentsPanel({
     <div
       className="comments-overlay"
       role="presentation"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
@@ -131,92 +113,78 @@ export default function CommentsPanel({
         aria-labelledby="comments-title"
       >
         <header className="comments-header">
-          {/* Visible task context/title */}
-          <h2 id="comments-title">
-            Comments · {task.title}
-          </h2>
-          <button
-            type="button"
-            className="comments-close"
-            aria-label="Close comments"
-            onClick={onClose}
-          >
+          <div>
+            <p className="dialog-eyebrow">Task discussion</p>
+            <h2 id="comments-title" className="comments-title">{task.title}</h2>
+          </div>
+          <button type="button" className="comments-close" aria-label="Close comments" onClick={onClose}>
             ✕
           </button>
         </header>
 
-        {loading && (
-          <p className="muted" aria-live="polite" aria-busy="true">
-            Loading comments…
-          </p>
-        )}
-
-        {!loading && loadError !== null && (
-          <>
-            <p className="form-error" role="alert">
-              {loadError}
+        <div className="comments-body">
+          {loading && (
+            <p className="comments-loading" aria-live="polite" aria-busy="true">
+              Loading comments…
             </p>
-            <button type="button" onClick={() => void refetch()}>
-              Retry
-            </button>
-          </>
-        )}
+          )}
 
-        {!loading && loadError === null && (
-          <>
-            {comments.length === 0 ? (
-              <p className="muted" aria-live="polite">
-                No comments yet.
-              </p>
-            ) : (
-              <ul className="comment-list" aria-label="Comments">
-                {comments.map((c) => {
-                  const author = emailFor(c.user_id);
-                  return (
-                    <li key={c.id} className="comment-item">
-                      <p className="comment-meta">
-                        <strong>{author ?? "Unknown user"}</strong>{" "}
-                        <time dateTime={c.created_at}>
-                          {formatCommentDate(c.created_at)}
-                        </time>
-                      </p>
-                      <p className="comment-content">{c.content}</p>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+          {!loading && loadError !== null && (
+            <div className="comments-state">
+              <p className="form-error" role="alert">{loadError}</p>
+              <button type="button" className="btn btn-secondary" onClick={() => void refetch()}>
+                Retry
+              </button>
+            </div>
+          )}
 
-            {canComment ? (
-              <form className="comment-form" onSubmit={(e) => void submit(e)} noValidate>
-                <label htmlFor="c-content">Add a comment</label>
-                <textarea
-                  id="c-content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={3}
-                />
-                {postError !== null && (
-                  <p className="form-error" role="alert">
-                    {postError}
-                  </p>
-                )}
-                <div className="form-actions">
-                  <button
-                    type="submit"
-                    className="primary"
-                    disabled={posting || content.trim() === ""}
-                  >
-                    {posting ? "Posting…" : "Add Comment"}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              // Unknown/unapproved role: view-only — NO mutation control.
-              <p className="muted">Viewing comments is read-only.</p>
-            )}
-          </>
-        )}
+          {!loading && loadError === null && (
+            <>
+              {comments.length === 0 ? (
+                <p className="comments-empty" aria-live="polite">No comments yet.</p>
+              ) : (
+                <ul className="comment-list" aria-label="Comments">
+                  {comments.map((comment) => {
+                    const author = emailFor(comment.user_id);
+                    return (
+                      <li key={comment.id} className="comment-item">
+                        <div className="comment-meta">
+                          <span>{author ?? "Unknown user"}</span>
+                          <time dateTime={comment.created_at}>
+                            {formatCommentDate(comment.created_at)}
+                          </time>
+                        </div>
+                        <p className="comment-content">{comment.content}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              {canComment ? (
+                <form className="comment-form" onSubmit={(event) => void submit(event)} noValidate>
+                  <label htmlFor="c-content" className="comment-form-label">Add a comment</label>
+                  <textarea
+                    id="c-content"
+                    className="comment-form-textarea"
+                    value={content}
+                    onChange={(event) => setContent(event.target.value)}
+                    rows={3}
+                    placeholder="Write a comment…"
+                  />
+                  {postError !== null && <p className="comment-form-error" role="alert">{postError}</p>}
+                  <div className="comment-form-actions">
+                    <button type="submit" className="btn btn-primary" disabled={posting || content.trim() === ""}>
+                      {posting ? "Posting…" : "Add Comment"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <p className="comments-readonly-note">Viewing comments is read-only.</p>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
