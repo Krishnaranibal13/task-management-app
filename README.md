@@ -6,6 +6,34 @@ Project Managers can create, assign, edit, delete, and track tasks through a fou
 
 The application includes role-based access control, server-side authentication, CSRF protection, responsive layouts, and persistent light/dark themes.
 
+## Development Process
+
+This application was developed as the reference software product for my [Digital Factory](https://github.com/ayuuOub/digital-factory).
+
+The Digital Factory is a governed, LLM-powered multi-agent software-delivery system operated through Hermes Agent. Specialized agent profiles were used across product analysis, UI/UX, architecture, security, development, independent QA/browser validation, and documentation, with Human-in-the-loop approval gates controlling progression through the workflow.
+
+Hermes and the LLM-backed agents were part of the **development workflow only**. The Task Management App itself runs independently and does not require Hermes or an LLM at runtime.
+
+```text
+Development
+-----------
+Hermes + LLM-backed agents
+          ↓
+Digital Factory
+          ↓
+Task Management App
+
+Runtime
+-------
+Browser
+   ↓
+Next.js
+   ↓
+FastAPI
+   ↓
+MySQL
+```
+
 ## Features
 
 ### Project Manager
