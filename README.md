@@ -8,7 +8,7 @@ The application includes role-based access control, server-side authentication, 
 
 ## Development Process
 
-This application was developed as the reference software product for my [Digital Factory](https://github.com/ayuuOub/digital-factory).
+This application was developed as the reference software product for my first-year Engineering Cycle internship project, the [Digital Factory](https://github.com/ayuuOub/digital-factory), in Digital Transformation and Artificial Intelligence at ENSA Al Hoceima.
 
 The Digital Factory is a governed, LLM-powered multi-agent software-delivery system operated through Hermes Agent. Specialized agent profiles were used across product analysis, UI/UX, architecture, security, development, independent QA/browser validation, and documentation, with Human-in-the-loop approval gates controlling progression through the workflow.
 
