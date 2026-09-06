@@ -34,6 +34,20 @@ FastAPI
 MySQL
 ```
 
+## Screenshots
+
+### Project Manager Workspace
+
+![Project Manager dashboard](docs/images/task-dashboard-project-manager.webp)
+
+The Project Manager view provides full task-management controls, including task creation, editing, deletion, assignment, status updates, and comments.
+
+### Developer Workspace
+
+![Developer dashboard](docs/images/task-dashboard-developer.webp)
+
+The Developer view exposes the shared Kanban workflow while restricting management actions according to the application's role-based access-control model.
+
 ## Features
 
 ### Project Manager
