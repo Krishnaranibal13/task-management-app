@@ -2,7 +2,6 @@ services:
 
   db:
     image: mysql:8.4
-    container_name: taskmgmt-db
     restart: unless-stopped
 
     environment:
@@ -28,7 +27,6 @@ services:
 
   backend:
     build: ./backend
-    container_name: taskmgmt-backend
     restart: unless-stopped
 
     environment:
@@ -55,7 +53,6 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: taskmgmt-frontend
     restart: unless-stopped
 
     environment:
@@ -67,7 +64,6 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: taskmgmt-nginx
     restart: unless-stopped
 
     ports:
