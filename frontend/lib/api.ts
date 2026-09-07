@@ -15,7 +15,7 @@
 
 /** Backend base URL (compose injects NEXT_PUBLIC_API_BASE_URL). */
 export const API_BASE: string =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 /** Product-useful identity fields for the authenticated UI. */
 export interface CurrentUser {
