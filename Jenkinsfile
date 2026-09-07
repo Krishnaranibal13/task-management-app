@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        APP_DIR = '/home/ubuntu/task-management-app'
-    }
-
     stages {
 
         stage('Checkout') {
@@ -27,27 +23,15 @@ pipeline {
             steps {
                 echo 'Building Docker images...'
                 sh '''
-                    cd ${APP_DIR}
                     docker compose build
                 '''
             }
         }
 
-        stage('Stop Old Containers') {
-            steps {
-                echo 'Stopping old containers...'
-                sh '''
-                    cd ${APP_DIR}
-                    docker compose down
-                '''
-            }
-        }
-
-        stage('Start Application') {
+        stage('Deploy') {
             steps {
                 echo 'Starting application...'
                 sh '''
-                    cd ${APP_DIR}
                     docker compose up -d
                 '''
             }
@@ -55,14 +39,9 @@ pipeline {
 
         stage('Verify Deployment') {
             steps {
-                echo 'Checking running containers...'
+                echo 'Checking containers...'
                 sh '''
-                    cd ${APP_DIR}
-                    docker compose ps
-
-                    echo "Waiting for application..."
                     sleep 15
-
                     docker compose ps
                 '''
             }
@@ -72,7 +51,7 @@ pipeline {
     post {
         success {
             echo '======================================'
-            echo 'Deployment successful!'
+            echo 'Task Management App deployed successfully!'
             echo '======================================'
         }
 
