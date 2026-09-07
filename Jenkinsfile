@@ -1,6 +1,13 @@
 pipeline {
     agent any
 
+    environment {
+        MYSQL_ROOT_PASSWORD = credentials('task-mysql-root-password')
+        MYSQL_PASSWORD = credentials('task-mysql-password')
+        MYSQL_DB = 'taskdb'
+        MYSQL_USER = 'appuser'
+    }
+
     stages {
 
         stage('Checkout') {
@@ -19,6 +26,23 @@ pipeline {
             }
         }
 
+        stage('Create Environment') {
+            steps {
+                sh '''
+                    cat > .env <<EOF
+MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+MYSQL_PASSWORD=${MYSQL_PASSWORD}
+MYSQL_DB=${MYSQL_DB}
+MYSQL_USER=${MYSQL_USER}
+MYSQL_HOST_PORT=33061
+CORS_ALLOWED_ORIGINS_RAW=http://3.95.199.5
+EOF
+
+                    chmod 600 .env
+                '''
+            }
+        }
+
         stage('Build Docker Images') {
             steps {
                 echo 'Building Docker images...'
@@ -30,7 +54,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Starting application...'
+                echo 'Deploying application...'
                 sh '''
                     docker compose up -d
                 '''
@@ -39,7 +63,6 @@ pipeline {
 
         stage('Verify Deployment') {
             steps {
-                echo 'Checking containers...'
                 sh '''
                     sleep 15
                     docker compose ps
@@ -49,17 +72,18 @@ pipeline {
     }
 
     post {
+        always {
+            sh '''
+                rm -f .env
+            '''
+        }
+
         success {
-            echo '======================================'
             echo 'Task Management App deployed successfully!'
-            echo '======================================'
         }
 
         failure {
-            echo '======================================'
             echo 'Deployment failed!'
-            echo 'Check Jenkins console logs.'
-            echo '======================================'
         }
     }
 }
